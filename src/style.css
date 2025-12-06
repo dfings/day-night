@@ -1,3 +1,8 @@
+:root {
+    --day-color: rgb(53, 18, 35);
+    --night-color: rgb(18, 53, 36);
+}
+
 body {
     margin: 0;
     display: flex;
@@ -38,4 +43,24 @@ body {
 #night-count {
     top: 50px;
     left: 10px;
+}
+
+#theme-selector {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 100;
+    color: white;
+    font-family: monospace;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    border-radius: 5px;
+}
+
+#theme-select {
+    background-color: #333;
+    color: white;
+    border: 1px solid #555;
+    padding: 5px;
+    border-radius: 3px;
 }

@@ -51,15 +51,49 @@ const config = {
     cellSize: 50,
     startPositionRange: { min: 0.2, max: 0.8 },
     bounceOffset: 2, // Added to push ball out of collision
-    selectedTheme: 'christmas', // Change this to select a different theme
+    selectedTheme: 'christmas', // Default theme
+    dayColor: '', // Will be set by setTheme
+    nightColor: '', // Will be set by setTheme
 };
-
-// Set dayColor and nightColor based on the selectedTheme
-config.dayColor = themes[config.selectedTheme].dayColor;
-config.nightColor = themes[config.selectedTheme].nightColor;
 
 config.xBoundary = config.gridWidth * config.cellSize - config.ballSize;
 config.yBoundary = config.gridHeight * config.cellSize - config.ballSize;
+
+// Helper to get CSS variable values
+function getCssVar(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+// Function to set the theme
+function setTheme(themeName) {
+    const theme = themes[themeName];
+    if (theme) {
+        document.documentElement.style.setProperty('--day-color', theme.dayColor);
+        document.documentElement.style.setProperty('--night-color', theme.nightColor);
+        config.dayColor = theme.dayColor;
+        config.nightColor = theme.nightColor;
+        config.selectedTheme = themeName;
+
+        if (game && renderer) {
+            // Update grid cell colors based on their isDay state
+            for (let y = 0; y < config.gridHeight; y++) {
+                for (let x = 0; x < config.gridWidth; x++) {
+                    const cell = game.grid.getCell(x, y);
+                    cell.color = cell.isDay ? config.dayColor : config.nightColor;
+                }
+            }
+            renderer.updateAllCellColors(game.grid);
+
+            // Update ball colors based on their isDay state
+            game.balls.forEach(ball => {
+                ball.color = ball.isDay ? config.dayColor : config.nightColor;
+            });
+            renderer.updateBallColors(game.balls);
+
+            renderer.updateCounts(game.grid.dayCount, game.grid.nightCount);
+        }
+    }
+}
 
 // --- Classes ---
 
@@ -68,8 +102,8 @@ class Game {
         this.renderer = renderer;
         this.grid = new Grid();
         this.balls = [
-            new Ball(0, config.nightColor, 45),
-            new Ball(config.xBoundary, config.dayColor, 135),
+            new Ball(0, false, 45), // Ball 1 starts as night (isDay: false)
+            new Ball(config.xBoundary, true, 135), // Ball 2 starts as day (isDay: true)
         ];
         this.renderer.renderGrid(this.grid);
         this.renderer.renderBalls(this.balls);
@@ -94,7 +128,8 @@ class Game {
             const gridY = Math.floor((ball.y + config.ballSize / 2) / config.cellSize);
 
             const cell = this.grid.getCell(gridX, gridY);
-            if (cell && cell.color === ball.color) {
+            // Collision occurs if ball's isDay state matches cell's isDay state
+            if (cell && ball.isDay === cell.isDay) {
                 this.grid.flipCellColor(cell);
                 this.renderer.updateCell(cell, gridX, gridY);
                 this.renderer.updateCounts(this.grid.dayCount, this.grid.nightCount);
@@ -146,9 +181,10 @@ class Grid {
         for (let y = 0; y < config.gridHeight; y++) {
             this.grid[y] = [];
             for (let x = 0; x < config.gridWidth; x++) {
-                const color = x < config.gridWidth / 2 ? config.dayColor : config.nightColor;
-                this.grid[y][x] = { color: color };
-                if (color === config.dayColor) {
+                const isDay = x < config.gridWidth / 2;
+                const color = isDay ? config.dayColor : config.nightColor;
+                this.grid[y][x] = { color: color, isDay: isDay };
+                if (isDay) {
                     this.dayCount++;
                 } else {
                     this.nightCount++;
@@ -165,25 +201,27 @@ class Grid {
     }
 
     flipCellColor(cell) {
-        if (cell.color === config.dayColor) {
+        cell.isDay = !cell.isDay;
+        if (cell.isDay) {
+            cell.color = config.dayColor;
+            this.dayCount++;
+            this.nightCount--;
+        } else {
             cell.color = config.nightColor;
             this.dayCount--;
             this.nightCount++;
-        } else {
-            cell.color = config.dayColor;
-            this.nightCount--;
-            this.dayCount++;
         }
     }
 }
 
 class Ball {
-    constructor(x, color, angle) {
+    constructor(x, isDay, angle) {
         this.x = x;
         const range = config.startPositionRange.max - config.startPositionRange.min;
         const startY = Math.random() * range + config.startPositionRange.min;
         this.y = startY * config.gridHeight * config.cellSize;
-        this.color = color;
+        this.isDay = isDay;
+        this.color = isDay ? config.dayColor : config.nightColor;
 
         const rad = angle * (Math.PI / 180);
         this.vx = Math.cos(rad) * config.speed;
@@ -236,6 +274,23 @@ class Renderer {
         }
     }
 
+    updateAllCellColors(grid) {
+        for (let y = 0; y < config.gridHeight; y++) {
+            for (let x = 0; x < config.gridWidth; x++) {
+                const cell = grid.getCell(x, y);
+                this.cellElements[y][x].style.backgroundColor = cell.color;
+            }
+        }
+    }
+
+    updateBallColors(balls) {
+        balls.forEach((ball, index) => {
+            if (this.ballElements[index]) {
+                this.ballElements[index].style.backgroundColor = ball.color;
+            }
+        });
+    }
+
     renderBalls(balls) {
         const containerRect = this.gridContainer.getBoundingClientRect();
         balls.forEach((ball, index) => {
@@ -268,4 +323,8 @@ class Renderer {
 const gridContainer = document.getElementById('grid-container');
 const renderer = new Renderer(gridContainer);
 const game = new Game(renderer);
+
+// Initialize theme
+setTheme(config.selectedTheme);
+
 game.gameLoop();
