@@ -4,10 +4,10 @@ const config = {
     gridHeight: 20,
     dayColor: 'rgb(53, 18, 35)',
     nightColor: 'rgb(18, 53, 36)',
-    speed: 4,
-    ballSize: 20,
-    cellSize: 20,
-    startPositionRange: { min: 0.25, max: 0.75 },
+    speed: 8,
+    ballSize: 40,
+    cellSize: 40,
+    startPositionRange: { min: 0.2, max: 0.8 },
 };
 config.xBoundary = config.gridWidth * config.cellSize - config.ballSize;
 config.yBoundary = config.gridHeight * config.cellSize - config.ballSize;
@@ -53,21 +53,36 @@ class Game {
     }
 
     bounceBallOffCell(ball, gridX, gridY) {
-        const ballCenterX = ball.x + config.ballSize / 2;
-        const ballCenterY = ball.y + config.ballSize / 2;
-        const cellCenterX = gridX * config.cellSize + config.cellSize / 2;
-        const cellCenterY = gridY * config.cellSize + config.cellSize / 2;
+        const ballHalf = config.ballSize / 2;
+        const cellHalf = config.cellSize / 2;
+
+        const ballCenterX = ball.x + ballHalf;
+        const ballCenterY = ball.y + ballHalf;
+        const cellCenterX = gridX * config.cellSize + cellHalf;
+        const cellCenterY = gridY * config.cellSize + cellHalf;
 
         const dx = ballCenterX - cellCenterX;
         const dy = ballCenterY - cellCenterY;
 
-        const overlapX = config.cellSize - Math.abs(dx);
-        const overlapY = config.cellSize - Math.abs(dy);
+        const overlapX = (ballHalf + cellHalf) - Math.abs(dx);
+        const overlapY = (ballHalf + cellHalf) - Math.abs(dy);
 
-        if (overlapX > overlapY) {
-            ball.vy *= -1;
-        } else {
-            ball.vx *= -1;
+        if (overlapX > 0 && overlapY > 0) {
+            if (overlapX < overlapY) {
+                if (dx > 0) {
+                    ball.x += overlapX;
+                } else {
+                    ball.x -= overlapX;
+                }
+                ball.vx *= -1;
+            } else {
+                if (dy > 0) {
+                    ball.y += overlapY;
+                } else {
+                    ball.y -= overlapY;
+                }
+                ball.vy *= -1;
+            }
         }
     }
 }
@@ -146,6 +161,8 @@ class Renderer {
                 const cellElement = document.createElement('div');
                 cellElement.classList.add('grid-cell');
                 cellElement.style.backgroundColor = cell.color;
+                cellElement.style.width = `${config.cellSize}px`;
+                cellElement.style.height = `${config.cellSize}px`;
                 this.gridContainer.appendChild(cellElement);
                 this.cellElements[y][x] = cellElement;
             }
@@ -163,6 +180,8 @@ class Renderer {
             }
             const ballElement = this.ballElements[index];
             ballElement.style.backgroundColor = ball.color;
+            ballElement.style.width = `${config.ballSize}px`;
+            ballElement.style.height = `${config.ballSize}px`;
             ballElement.style.left = `${containerRect.left + ball.x}px`;
             ballElement.style.top = `${containerRect.top + ball.y}px`;
         });

@@ -13,13 +13,9 @@ body {
 }
 
 .grid-cell {
-    width: 20px;
-    height: 20px;
 }
 
 .ball {
     position: absolute;
-    width: 20px;
-    height: 20px;
     border-radius: 50%;
 }
