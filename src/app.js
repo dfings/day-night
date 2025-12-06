@@ -1,12 +1,12 @@
 // --- Configuration ---
 const config = {
-    gridWidth: 20,
-    gridHeight: 20,
+    gridWidth: 14,
+    gridHeight: 14,
     dayColor: 'rgb(53, 18, 35)',
     nightColor: 'rgb(18, 53, 36)',
     speed: 8,
-    ballSize: 40,
-    cellSize: 40,
+    ballSize: 50,
+    cellSize: 50,
     startPositionRange: { min: 0.2, max: 0.8 },
 };
 config.xBoundary = config.gridWidth * config.cellSize - config.ballSize;
