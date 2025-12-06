@@ -4,10 +4,11 @@ const config = {
     gridHeight: 14,
     dayColor: 'rgb(53, 18, 35)',
     nightColor: 'rgb(18, 53, 36)',
-    speed: 8,
+    speed: 10,
     ballSize: 50,
     cellSize: 50,
     startPositionRange: { min: 0.2, max: 0.8 },
+    bounceOffset: 2, // Added to push ball out of collision
 };
 config.xBoundary = config.gridWidth * config.cellSize - config.ballSize;
 config.yBoundary = config.gridHeight * config.cellSize - config.ballSize;
@@ -70,16 +71,16 @@ class Game {
         if (overlapX > 0 && overlapY > 0) {
             if (overlapX < overlapY) {
                 if (dx > 0) {
-                    ball.x += overlapX;
+                    ball.x += overlapX + config.bounceOffset;
                 } else {
-                    ball.x -= overlapX;
+                    ball.x -= overlapX + config.bounceOffset;
                 }
                 ball.vx *= -1;
             } else {
                 if (dy > 0) {
-                    ball.y += overlapY;
+                    ball.y += overlapY + config.bounceOffset;
                 } else {
-                    ball.y -= overlapY;
+                    ball.y -= overlapY + config.bounceOffset;
                 }
                 ball.vy *= -1;
             }
