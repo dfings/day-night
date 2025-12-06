@@ -1,15 +1,47 @@
+// --- Themes ---
+const themes = {
+    christmas: {
+        dayColor: 'rgb(53, 18, 35)',
+        nightColor: 'rgb(18, 53, 36)',
+    },
+    sunsetTwilight: {
+        dayColor: 'rgb(255, 165, 0)', // Orange
+        nightColor: 'rgb(75, 0, 130)', // Indigo
+    },
+    forest: {
+        dayColor: 'rgb(34, 139, 34)', // Forest Green
+        nightColor: 'rgb(25, 25, 112)', // Midnight Blue
+    },
+    desert: {
+        dayColor: 'rgb(244, 164, 96)', // Sandy Brown
+        nightColor: 'rgb(101, 67, 33)', // Dark Brown
+    },
+    ocean: {
+        dayColor: 'rgb(0, 191, 255)', // Deep Sky Blue
+        nightColor: 'rgb(25, 25, 112)', // Midnight Blue
+    },
+    space: {
+        dayColor: 'rgb(25, 25, 112)', // Midnight Blue
+        nightColor: 'rgb(10, 10, 30)', // Very Dark Blue/Black
+    },
+};
+
 // --- Configuration ---
 const config = {
     gridWidth: 16,
     gridHeight: 16,
-    dayColor: 'rgb(53, 18, 35)',
-    nightColor: 'rgb(18, 53, 36)',
     speed: 10,
     ballSize: 50,
     cellSize: 50,
     startPositionRange: { min: 0.2, max: 0.8 },
     bounceOffset: 2, // Added to push ball out of collision
+    selectedTheme: 'christmas', // Change this to select a different theme
 };
+
+// Set dayColor and nightColor based on the selectedTheme
+config.dayColor = themes[config.selectedTheme].dayColor;
+config.nightColor = themes[config.selectedTheme].nightColor;
+
 config.xBoundary = config.gridWidth * config.cellSize - config.ballSize;
 config.yBoundary = config.gridHeight * config.cellSize - config.ballSize;
 
