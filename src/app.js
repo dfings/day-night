@@ -24,6 +24,22 @@ const themes = {
         dayColor: 'rgb(25, 25, 112)', // Midnight Blue
         nightColor: 'rgb(10, 10, 30)', // Very Dark Blue/Black
     },
+    halloween: {
+        dayColor: 'rgb(255, 140, 0)', // Dark Orange
+        nightColor: 'rgb(75, 0, 130)', // Indigo/Deep Purple
+    },
+    valentines: {
+        dayColor: 'rgb(255, 105, 180)', // Hot Pink
+        nightColor: 'rgb(178, 34, 34)', // Firebrick Red
+    },
+    easter: {
+        dayColor: 'rgb(255, 255, 0)', // Yellow
+        nightColor: 'rgb(147, 112, 219)', // Medium Purple
+    },
+    monochrome: {
+        dayColor: 'rgb(255, 255, 255)', // White
+        nightColor: 'rgb(0, 0, 0)', // Black
+    },
 };
 
 // --- Configuration ---
