@@ -1,0 +1,25 @@
+body {
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #111;
+}
+
+#grid-container {
+    display: grid;
+    border: 1px solid #fff;
+}
+
+.grid-cell {
+    width: 20px;
+    height: 20px;
+}
+
+.ball {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}
