@@ -1,7 +1,7 @@
 // --- Configuration ---
 const config = {
-    gridWidth: 14,
-    gridHeight: 14,
+    gridWidth: 16,
+    gridHeight: 16,
     dayColor: 'rgb(53, 18, 35)',
     nightColor: 'rgb(18, 53, 36)',
     speed: 10,
@@ -25,6 +25,7 @@ class Game {
         ];
         this.renderer.renderGrid(this.grid);
         this.renderer.renderBalls(this.balls);
+        this.renderer.updateCounts(this.grid.dayCount, this.grid.nightCount);
     }
 
     gameLoop() {
@@ -48,6 +49,7 @@ class Game {
             if (cell && cell.color === ball.color) {
                 this.grid.flipCellColor(cell);
                 this.renderer.updateCell(cell, gridX, gridY);
+                this.renderer.updateCounts(this.grid.dayCount, this.grid.nightCount);
                 this.bounceBallOffCell(ball, gridX, gridY);
             }
         });
@@ -91,12 +93,18 @@ class Game {
 class Grid {
     constructor() {
         this.grid = [];
+        this.dayCount = 0;
+        this.nightCount = 0;
         for (let y = 0; y < config.gridHeight; y++) {
             this.grid[y] = [];
             for (let x = 0; x < config.gridWidth; x++) {
-                this.grid[y][x] = {
-                    color: x < config.gridWidth / 2 ? config.dayColor : config.nightColor,
-                };
+                const color = x < config.gridWidth / 2 ? config.dayColor : config.nightColor;
+                this.grid[y][x] = { color: color };
+                if (color === config.dayColor) {
+                    this.dayCount++;
+                } else {
+                    this.nightCount++;
+                }
             }
         }
     }
@@ -109,7 +117,15 @@ class Grid {
     }
 
     flipCellColor(cell) {
-        cell.color = cell.color === config.dayColor ? config.nightColor : config.dayColor;
+        if (cell.color === config.dayColor) {
+            cell.color = config.nightColor;
+            this.dayCount--;
+            this.nightCount++;
+        } else {
+            cell.color = config.dayColor;
+            this.nightCount--;
+            this.dayCount++;
+        }
     }
 }
 
@@ -152,6 +168,8 @@ class Renderer {
         this.gridContainer.style.gridTemplateColumns = `repeat(${config.gridWidth}, 1fr)`;
         this.ballElements = [];
         this.cellElements = [];
+        this.dayCountElement = document.getElementById('day-count');
+        this.nightCountElement = document.getElementById('night-count');
     }
 
     renderGrid(grid) {
@@ -190,6 +208,11 @@ class Renderer {
 
     updateCell(cell, x, y) {
         this.cellElements[y][x].style.backgroundColor = cell.color;
+    }
+
+    updateCounts(dayCount, nightCount) {
+        this.dayCountElement.innerHTML = `Day <span style="color: ${config.dayColor};">Cells</span>: ${dayCount}`;
+        this.nightCountElement.innerHTML = `Night <span style="color: ${config.nightColor};">Cells</span>: ${nightCount}`;
     }
 }
 

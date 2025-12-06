@@ -19,3 +19,23 @@ body {
     position: absolute;
     border-radius: 50%;
 }
+
+#day-count, #night-count {
+    position: absolute;
+    color: white;
+    font-size: 20px;
+    font-family: monospace;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 5px;
+}
+
+#day-count {
+    top: 10px;
+    left: 10px;
+}
+
+#night-count {
+    top: 50px;
+    left: 10px;
+}
