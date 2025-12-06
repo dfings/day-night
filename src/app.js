@@ -324,7 +324,20 @@ const gridContainer = document.getElementById('grid-container');
 const renderer = new Renderer(gridContainer);
 const game = new Game(renderer);
 
-// Initialize theme
+// Function to populate the theme selector dropdown
+function populateThemeSelector() {
+    const themeSelect = document.getElementById('theme-select');
+    for (const themeName in themes) {
+        const option = document.createElement('option');
+        option.value = themeName;
+        option.textContent = themeName.charAt(0).toUpperCase() + themeName.slice(1).replace(/([A-Z])/g, ' $1'); // Capitalize and add spaces
+        themeSelect.appendChild(option);
+    }
+    themeSelect.value = config.selectedTheme; // Set initial selection
+}
+
+// Initialize theme and populate selector
 setTheme(config.selectedTheme);
+populateThemeSelector();
 
 game.gameLoop();
