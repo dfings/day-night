@@ -49,7 +49,10 @@ const themes = {
 const config = {
     gridWidth: 16,
     gridHeight: 16,
-    speed: 10,
+    // Pixels travelled per 60Hz simulation tick.
+    speed: 15,
+    fixedTimeStepMs: 1000 / 60,
+    maxFrameDeltaMs: 250,
     ballSize: 50,
     cellSize: 50,
     startPositionRange: { min: 0.2, max: 0.8 },
@@ -74,14 +77,41 @@ class Game {
             new Ball(0, false, 45), // Ball 1 starts as night (isDay: false)
             new Ball(config.xBoundary, true, 135), // Ball 2 starts as day (isDay: true)
         ];
+        this.lastFrameTime = null;
+        this.accumulatorMs = 0;
         this.renderer.renderGrid(this.grid);
         this.renderer.renderBalls(this.balls);
         this.renderer.updateCounts(this.grid.dayCount, this.grid.nightCount);
     }
 
-    gameLoop() {
-        this.step();
-        requestAnimationFrame(() => this.gameLoop());
+    gameLoop(timestamp) {
+        if (this.lastFrameTime === null) {
+            this.lastFrameTime = timestamp;
+        }
+
+        const elapsedMs = Math.min(timestamp - this.lastFrameTime, config.maxFrameDeltaMs);
+        this.lastFrameTime = timestamp;
+        this.advanceTime(elapsedMs);
+
+        requestAnimationFrame(nextTimestamp => this.gameLoop(nextTimestamp));
+    }
+
+    // Advances the simulation at a fixed 60 Hz regardless of how often the
+    // browser paints. The cap prevents a backgrounded tab from replaying a huge
+    // backlog when it becomes visible again.
+    advanceTime(elapsedMs) {
+        this.accumulatorMs += Math.max(0, elapsedMs);
+        const timingTolerance = config.fixedTimeStepMs * 1e-9;
+
+        while (this.accumulatorMs >= config.fixedTimeStepMs - timingTolerance) {
+            this.step();
+            this.accumulatorMs -= config.fixedTimeStepMs;
+            if (this.accumulatorMs < 0 && this.accumulatorMs > -timingTolerance) {
+                this.accumulatorMs = 0;
+            }
+        }
+
+        this.renderer.renderBalls(this.balls);
     }
 
     // One frame of simulation. Separated from gameLoop so tests can advance the
@@ -92,23 +122,33 @@ class Game {
         });
 
         this.handleCollisions();
-
-        this.renderer.renderBalls(this.balls);
     }
 
     handleCollisions() {
-        this.balls.forEach(ball => {
-            const hits = this.findCollidingCells(ball);
-            if (hits.length === 0) {
-                return;
-            }
+        // Detect every collision against the same grid snapshot. Otherwise the
+        // first ball can change what the second ball collides with in this frame.
+        const collisions = this.balls
+            .map(ball => ({ ball, hits: this.findCollidingCells(ball) }))
+            .filter(({ hits }) => hits.length > 0);
 
+        if (collisions.length === 0) {
+            return;
+        }
+
+        const cellsToFlip = new Map();
+        collisions.forEach(({ hits }) => {
             hits.forEach(hit => {
-                this.grid.flipCellColor(hit.cell);
-                this.renderer.updateCell(hit.cell, hit.gridX, hit.gridY);
+                cellsToFlip.set(`${hit.gridX},${hit.gridY}`, hit);
             });
-            this.renderer.updateCounts(this.grid.dayCount, this.grid.nightCount);
+        });
 
+        cellsToFlip.forEach(hit => {
+            this.grid.flipCellColor(hit.cell);
+            this.renderer.updateCell(hit.cell, hit.gridX, hit.gridY);
+        });
+        this.renderer.updateCounts(this.grid.dayCount, this.grid.nightCount);
+
+        collisions.forEach(({ ball, hits }) => {
             this.bounceBallOffCells(ball, hits);
             // The push-out can shove the ball past the edge of the grid.
             ball.handleWallCollision();
@@ -123,12 +163,27 @@ class Game {
         const minY = Math.floor(ball.y / config.cellSize);
         const maxY = Math.ceil((ball.y + config.ballSize) / config.cellSize) - 1;
 
+        const ballRadius = config.ballSize / 2;
+        const ballCenterX = ball.x + ballRadius;
+        const ballCenterY = ball.y + ballRadius;
         const hits = [];
         for (let gridY = minY; gridY <= maxY; gridY++) {
             for (let gridX = minX; gridX <= maxX; gridX++) {
                 const cell = this.grid.getCell(gridX, gridY);
-                // Collision occurs if ball's isDay state matches cell's isDay state
-                if (cell && ball.isDay === cell.isDay) {
+                if (!cell || ball.isDay !== cell.isDay) {
+                    continue;
+                }
+
+                const cellLeft = gridX * config.cellSize;
+                const cellTop = gridY * config.cellSize;
+                const closestX = Math.max(cellLeft, Math.min(ballCenterX, cellLeft + config.cellSize));
+                const closestY = Math.max(cellTop, Math.min(ballCenterY, cellTop + config.cellSize));
+                const distanceX = ballCenterX - closestX;
+                const distanceY = ballCenterY - closestY;
+
+                // The rendered ball is circular, so a cell touched only by a
+                // corner of its square bounding box is not a collision.
+                if (distanceX * distanceX + distanceY * distanceY < ballRadius * ballRadius) {
                     hits.push({ cell, gridX, gridY });
                 }
             }

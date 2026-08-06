@@ -180,6 +180,73 @@ test('a ball passes through cells of the opposite color', () => {
     assert.strictEqual(ball.vx, config.speed, 'ball should not have bounced');
 });
 
+test('elapsed time advances equally at different display refresh rates', () => {
+    function runAt(frameRate) {
+        const game = newGame();
+        for (let y = 0; y < config.gridHeight; y++) {
+            for (let x = 0; x < config.gridWidth; x++) {
+                game.grid.getCell(x, y).isDay = false;
+            }
+        }
+
+        const ball = placeBall(true, 100, 100, 1, 0);
+        game.balls = [ball];
+        for (let frame = 0; frame < frameRate; frame++) {
+            game.advanceTime(1000 / frameRate);
+        }
+        return { x: ball.x, y: ball.y };
+    }
+
+    const baseline = runAt(60);
+    [30, 90, 120, 144, 240].forEach(frameRate => {
+        assert.deepStrictEqual(runAt(frameRate), baseline, `motion differed at ${frameRate} Hz`);
+    });
+});
+
+test('two balls see the same grid snapshot regardless of processing order', () => {
+    function runWithOrder(states) {
+        const game = newGame();
+        for (let y = 0; y < config.gridHeight; y++) {
+            for (let x = 0; x < config.gridWidth; x++) {
+                game.grid.getCell(x, y).isDay = false;
+            }
+        }
+
+        const target = game.grid.getCell(2, 2);
+        target.isDay = true;
+        game.balls = states.map(isDay => placeBall(isDay, 51, 100, config.speed, 0));
+        game.handleCollisions();
+
+        return {
+            targetIsDay: target.isDay,
+            dayVelocity: game.balls.find(ball => ball.isDay).vx,
+            nightVelocity: game.balls.find(ball => !ball.isDay).vx,
+        };
+    }
+
+    const dayFirst = runWithOrder([true, false]);
+    const nightFirst = runWithOrder([false, true]);
+    assert.deepStrictEqual(dayFirst, nightFirst);
+    assert.strictEqual(dayFirst.targetIsDay, false);
+    assert.ok(dayFirst.dayVelocity < 0, 'the matching day ball should bounce');
+    assert.ok(dayFirst.nightVelocity > 0, 'the non-matching night ball should pass through');
+});
+
+test('a circular ball does not collide through a bounding-box corner', () => {
+    const game = newGame();
+    for (let y = 0; y < config.gridHeight; y++) {
+        for (let x = 0; x < config.gridWidth; x++) {
+            game.grid.getCell(x, y).isDay = false;
+        }
+    }
+
+    // The ball's 50px square reaches cell 1,1, but its 25px-radius circle does not.
+    game.grid.getCell(1, 1).isDay = true;
+    const ball = placeBall(true, 1, 1, config.speed, config.speed);
+
+    assert.deepStrictEqual(game.findCollidingCells(ball), []);
+});
+
 test('a ball is pushed clear of a cell rather than left overlapping it', () => {
     const game = newGame();
     const ball = placeBall(true, 300, 300, config.speed, config.speed / 2);

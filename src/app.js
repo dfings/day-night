@@ -102,6 +102,7 @@ class Renderer {
 
 // --- Main ---
 const gridContainer = document.getElementById('grid-container');
+const gridStage = document.getElementById('grid-stage');
 const renderer = new Renderer(gridContainer);
 // Assigned below, once the theme has supplied the colors the grid is built from.
 let game = null;
@@ -123,4 +124,20 @@ setTheme(config.selectedTheme);
 populateThemeSelector();
 
 game = new Game(renderer);
-game.gameLoop();
+
+function resizeGrid() {
+    const margin = 16;
+    const availableWidth = Math.max(1, document.documentElement.clientWidth - margin);
+    const availableHeight = Math.max(1, document.documentElement.clientHeight - margin);
+    const logicalWidth = gridContainer.offsetWidth;
+    const logicalHeight = gridContainer.offsetHeight;
+    const scale = Math.min(1, availableWidth / logicalWidth, availableHeight / logicalHeight);
+
+    gridStage.style.width = `${logicalWidth * scale}px`;
+    gridStage.style.height = `${logicalHeight * scale}px`;
+    gridContainer.style.transform = `scale(${scale})`;
+}
+
+resizeGrid();
+window.addEventListener('resize', resizeGrid);
+requestAnimationFrame(timestamp => game.gameLoop(timestamp));

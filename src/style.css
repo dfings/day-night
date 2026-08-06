@@ -1,16 +1,27 @@
 body {
     margin: 0;
+    box-sizing: border-box;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 8px;
     background-color: #111;
+}
+
+#grid-stage {
+    position: relative;
+    flex: none;
 }
 
 #grid-container {
     display: grid;
     border: 1px solid #fff;
-    position: relative;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: top left;
 }
 
 .ball {
