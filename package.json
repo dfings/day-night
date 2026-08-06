@@ -1,0 +1,10 @@
+{
+  "name": "day-night",
+  "version": "1.0.0",
+  "description": "Day / Night ball bouncing AI demo",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  }
+}
